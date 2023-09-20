@@ -2,15 +2,14 @@
 #include <Windows.h>
 #include <TlHelp32.h>
 
-//#define DEBUG
-
 #include "macros.h"
 class Memory {
 private:
 	HANDLE hProcess = nullptr;
 	DWORD PID = 0;
-	std::uintptr_t baseAdress;
 public:
+	const DWORD& ProcessId = PID;
+	
 	Memory() {
 		hProcess = nullptr;
 		PID = 0;
@@ -78,6 +77,13 @@ public:
 			return -1;
 		}
 		std::uintptr_t res = 0;
+
+		debug("module %s", entry.szModule);
+		if (!moduleName.compare(entry.szModule)) {
+			//debug("entry.modBaseAddr: 0x%p", entry.modBaseAddr);
+			res = reinterpret_cast<std::uintptr_t>(entry.modBaseAddr);
+			return res;
+		}
 		while (Module32Next(snapshot, &entry)) {
 			debug("module %s", entry.szModule);
 			if (!moduleName.compare(entry.szModule)) {
@@ -87,6 +93,10 @@ public:
 		}
 		if (snapshot) CloseHandle(snapshot);
 		return res;
+	}
+
+	uintptr_t GetBaseAdress() {
+		return reinterpret_cast<std::uintptr_t>(this->hProcess);
 	}
 
 	template<typename T>
@@ -115,7 +125,7 @@ public:
 			NULL
 		)) {
 			//error
-			error("Error %lld: ReadProcessMemory() failed", GetLastError());
+			error("Error %lld: WriteProcessMemory() failed", GetLastError());
 			return;
 		}
 	}
