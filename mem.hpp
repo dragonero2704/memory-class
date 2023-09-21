@@ -116,7 +116,7 @@ public:
 	}
 
 	template<typename T>
-	void Write(const std::uintptr_t& address, const T& value) {
+	bool Write(const std::uintptr_t& address, const T& value) {
 		if (!WriteProcessMemory(
 			this->hProcess,
 			reinterpret_cast<void*>(address),
@@ -126,7 +126,8 @@ public:
 		)) {
 			//error
 			error("Error %lld: WriteProcessMemory() failed", GetLastError());
-			return;
+			return false;
 		}
+		return true;
 	}
 };
