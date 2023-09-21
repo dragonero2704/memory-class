@@ -14,7 +14,7 @@ int main(int argc, char** argv)
 	//uintptr_t targetAdress = 0x8d425ff69c;
 	Memory mem(targetProgram);
 	auto programBaseAdress = mem.GetModuleByName(L"dummy.exe");
-	ok("%ls base address: 0x%x", targetProgram.c_str(), programBaseAdress);
+	ok("%ls base address: 0x%llx", targetProgram.c_str(), programBaseAdress);
 	if(programBaseAdress == 0){
 		error("Can't get \"%ls\" address", targetProgram.c_str());
 		return EXIT_FAILURE;
@@ -32,12 +32,12 @@ int main(int argc, char** argv)
 	*/
 	info("Method 2");
 	auto addr1 = mem.Read<uintptr_t>(programBaseAdress + offsets2::addr1_offset);
-	ok("0x%x -> 0x%x", programBaseAdress + offsets2::addr1_offset, addr1);
+	ok("0x%llx -> 0x%llx", programBaseAdress + offsets2::addr1_offset, addr1);
 	auto targetAdress = addr1+offsets2::addr2_offset;
 	auto val = mem.Read<int>(targetAdress);
-	ok("0x%x : 0x%d", targetAdress, val);
+	ok("0x%llx : %d", targetAdress, val);
 
-	ok("Freezing variable 0x%x of \"%ls\" to value %d", targetAdress, targetProgram.c_str(), 666);
+	ok("Freezing variable 0x%llx of \"%ls\" to value %d", targetAdress, targetProgram.c_str(), 666);
 	while (mem.Write<int>(targetAdress, 666));
 	
 	return EXIT_SUCCESS;
