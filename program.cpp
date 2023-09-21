@@ -6,12 +6,10 @@
 #include "macros.h"
 #include "offsets.hpp"
 
-using namespace std;
-
 // 0x00007FF74C280000 prefered image base of dummy.exe
 int main(int argc, char** argv) 
 {
-	wstring targetProgram = L"dummy.exe";
+	std::wstring targetProgram = L"dummy.exe";
 	//uintptr_t targetAdress = 0x8d425ff69c;
 	Memory mem(targetProgram);
 	auto programBaseAdress = mem.GetModuleByName(L"dummy.exe");
@@ -21,7 +19,7 @@ int main(int argc, char** argv)
 		return EXIT_FAILURE;
 	}
 	info("Method 2");
-	auto addr1 = mem.Read<uintptr_t>(programBaseAdress + offsets2::addr1_offset);
+	auto addr1 = mem.Read<std::uintptr_t>(programBaseAdress + offsets2::addr1_offset);
 	ok("0x%llx -> 0x%llx", programBaseAdress + offsets2::addr1_offset, addr1);
 	auto targetAdress = addr1+offsets2::addr2_offset;
 	auto val = mem.Read<int>(targetAdress);
