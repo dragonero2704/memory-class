@@ -1,4 +1,4 @@
-#include <iostream>
+#include <cstdint>
 
 // offsets 
 
@@ -9,7 +9,7 @@ addr1 -> addr2   // THREADSTACK0
 addr2 + 0x200 -> addr3 || addr2 + 0x20
 addr3 + 0x8AC -> final adress!
 
-*/
+!!! fails !!!
 
 namespace offsets {
 	constexpr std::uintptr_t addr1_offset = 0xEACE0;
@@ -17,7 +17,7 @@ namespace offsets {
 	constexpr std::uintptr_t addr3_offset = 0x200;
 	constexpr std::uintptr_t addr3_offset_value = 0x8AC;
 
-}
+}*/
 
 // method 2
 /*

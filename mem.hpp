@@ -1,7 +1,7 @@
 ﻿#include <string>
 #include <Windows.h>
 #include <TlHelp32.h>
-
+#include <cstdint>
 #include "macros.h"
 class Memory {
 private:
@@ -14,9 +14,9 @@ public:
 		hProcess = nullptr;
 		PID = 0;
 	}
-	Memory(std::string processName) {
-		PROCESSENTRY32 entry = { };
-		entry.dwSize = sizeof(PROCESSENTRY32);
+	Memory(std::wstring processName) {
+		PROCESSENTRY32W entry = { };
+		entry.dwSize = sizeof(PROCESSENTRY32W);
 
 		const auto snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 		if (snapshot == INVALID_HANDLE_VALUE) {
@@ -25,22 +25,22 @@ public:
 			return;
 		}
 
-		if (!Process32First(snapshot, &entry)) {
+		if (!Process32FirstW(snapshot, &entry)) {
 			// no process
 			error("Error %d: can't get processes", GetLastError());
 			return;
 		}
 		//iterate through processes
-		while (Process32Next(snapshot, &entry)) 
+		while (Process32NextW(snapshot, &entry)) 
 		{
-			debug("Process %s", entry.szExeFile);
+			debug("Process %ls", entry.szExeFile);
 			if (!processName.compare(entry.szExeFile)) 
 			{
 				this->PID = entry.th32ProcessID;
 				//get a process handle
 				this->hProcess = OpenProcess(
 				PROCESS_ALL_ACCESS,
-				NULL,
+				FALSE,
 				this->PID
 				);
 				if (this->hProcess == INVALID_HANDLE_VALUE) {
@@ -60,9 +60,9 @@ public:
 			CloseHandle(hProcess);
 	}
 
-	uintptr_t GetModuleByName(const std::string moduleName) {
-		MODULEENTRY32 entry = {};
-		entry.dwSize = sizeof(MODULEENTRY32);
+	uintptr_t GetModuleByName(const std::wstring moduleName) {
+		MODULEENTRY32W entry = {};
+		entry.dwSize = sizeof(MODULEENTRY32W);
 
 		const auto snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, this->PID);
 		if (snapshot == INVALID_HANDLE_VALUE) {
@@ -71,20 +71,20 @@ public:
 			return-1;
 		}
 
-		if (!Module32First(snapshot, &entry)) {
+		if (!Module32FirstW(snapshot, &entry)) {
 			// no process
 			error("Error %d: can't get modules", GetLastError());
 			return -1;
 		}
 		std::uintptr_t res = 0;
 
-		debug("module %s", entry.szModule);
+		debug("module %ls", entry.szModule);
 		if (!moduleName.compare(entry.szModule)) {
 			//debug("entry.modBaseAddr: 0x%p", entry.modBaseAddr);
 			res = reinterpret_cast<std::uintptr_t>(entry.modBaseAddr);
 			return res;
 		}
-		while (Module32Next(snapshot, &entry)) {
+		while (Module32NextW(snapshot, &entry)) {
 			debug("module %s", entry.szModule);
 			if (!moduleName.compare(entry.szModule)) {
 				res = reinterpret_cast<std::uintptr_t>(entry.modBaseAddr);
