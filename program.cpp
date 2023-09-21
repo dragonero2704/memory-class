@@ -29,12 +29,16 @@ int main(int argc, char** argv)
 	info("Method 2");
 	auto addr1 = mem.Read<uintptr_t>(programBaseAdress + offsets2::addr1_offset);
 	ok("%p -> %p", programBaseAdress + offsets2::addr1_offset, addr1);
-	auto val = mem.Read<int>(addr1+offsets2::addr2_offset);
-	ok("%p : %d", addr1 + offsets2::addr2_offset, val);
+	auto targetAdress = addr1+offsets2::addr2_offset;
+	auto val = mem.Read<int>(targetAdress);
+	ok("%p : %d", targetAdress, val);
 
 	
-
-	//mem.Write<int>(targetAdress, 666);
+	while (true)
+	{
+		mem.Write<int>(targetAdress, 666);
+	}
+	
 	
 
 	return EXIT_SUCCESS;
