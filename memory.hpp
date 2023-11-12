@@ -7,21 +7,16 @@ class Memory {
 private:
 	HANDLE hProcess = nullptr;
 	DWORD PID = 0;
-public:
-	const DWORD& ProcessId = PID;
-	
-	Memory() {
-		hProcess = nullptr;
-		PID = 0;
-	}
-	Memory(std::wstring processName) {
+
+	void init(const std::wstring& processName)
+	{
 		PROCESSENTRY32W entry = { };
 		entry.dwSize = sizeof(PROCESSENTRY32W);
 
 		const auto snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 		if (snapshot == INVALID_HANDLE_VALUE) {
 			//error
-			error("Error %lld: Invalid Handle", GetLastError());
+			error("Error %ld: Invalid Handle", GetLastError());
 			return;
 		}
 
@@ -31,35 +26,53 @@ public:
 			return;
 		}
 		//iterate through processes
-		while (Process32NextW(snapshot, &entry)) 
+		while (Process32NextW(snapshot, &entry))
 		{
 			debug("Process %ls", entry.szExeFile);
-			if (!processName.compare(entry.szExeFile)) 
+			if (!processName.compare(entry.szExeFile))
 			{
 				this->PID = entry.th32ProcessID;
 				//get a process handle
 				this->hProcess = OpenProcess(
-				PROCESS_ALL_ACCESS,
-				FALSE,
-				this->PID
+					PROCESS_ALL_ACCESS,
+					FALSE,
+					this->PID
 				);
 				if (this->hProcess == INVALID_HANDLE_VALUE) {
-					error("Error %lld: Can't get target process handle", GetLastError());
+					error("Error %ld: Can't get target process handle", GetLastError());
 					return;
 				}
 				break;
 			}
 		}
 		debug("PID: %lld", this->PID);
-		
+
 		if (snapshot) CloseHandle(snapshot);
 	}
-	
-	~Memory(){
+
+public:
+	const DWORD& ProcessId = PID;
+
+	Memory() {
+		hProcess = nullptr;
+		PID = 0;
+	}
+	Memory(const std::wstring& processName)
+	{
+		init(processName);
+	}
+
+	Memory(const std::string& processName)
+	{
+
+		init(std::wstring(processName.begin(), processName.end()));
+	}
+
+	~Memory() {
 		if (hProcess)
 			CloseHandle(hProcess);
 	}
-
+	
 	uintptr_t GetModuleByName(const std::wstring moduleName) {
 		MODULEENTRY32W entry = {};
 		entry.dwSize = sizeof(MODULEENTRY32W);
@@ -67,7 +80,7 @@ public:
 		const auto snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, this->PID);
 		if (snapshot == INVALID_HANDLE_VALUE) {
 			//error
-			error("Error %lld: Invalid Handle", GetLastError());
+			error("Error %ld: Invalid Handle", GetLastError());
 			return-1;
 		}
 
@@ -85,7 +98,7 @@ public:
 			return res;
 		}
 		while (Module32NextW(snapshot, &entry)) {
-			debug("module %s", entry.szModule);
+			debug("module %ls", entry.szModule);
 			if (!moduleName.compare(entry.szModule)) {
 				res = reinterpret_cast<std::uintptr_t>(entry.modBaseAddr);
 				break;
@@ -95,39 +108,43 @@ public:
 		return res;
 	}
 
-	uintptr_t GetBaseAdress() {
+	std::uintptr_t GetBaseAddress() {
 		return reinterpret_cast<std::uintptr_t>(this->hProcess);
 	}
 
 	template<typename T>
 	const T Read(const std::uintptr_t& address) {
 		T value;
+		SIZE_T bytesRead;
 		if (!ReadProcessMemory(
 			this->hProcess,
 			reinterpret_cast<const void*>(address),
-			&value,
+			reinterpret_cast<void*>(&value),
 			sizeof(T),
-			NULL
+			&bytesRead
 		)) {
 			//ReadProcessMemory failed
-			error("Error %lld: read 0x%x address memory failed", GetLastError(), address);
+			error("Error %ld: read 0x%llx address memory failed", GetLastError(), address);
 		}
+		debug("Read %llu",bytesRead);
 		return value;
 	}
 
 	template<typename T>
 	bool Write(const std::uintptr_t& address, const T& value) {
+		SIZE_T bytesRead;
 		if (!WriteProcessMemory(
 			this->hProcess,
 			reinterpret_cast<void*>(address),
-			&value, 
+			&value,
 			sizeof(T),
-			NULL
+			&bytesRead
 		)) {
 			//error
-			error("Error %lld: WriteProcessMemory() failed", GetLastError());
+			error("Error %ld: write 0x%llx failed", GetLastError(), address);
 			return false;
 		}
+		debug("Read %llu",bytesRead);
 		return true;
 	}
 };

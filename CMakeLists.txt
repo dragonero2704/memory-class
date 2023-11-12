@@ -16,7 +16,7 @@ enable_language(C ASM)
 
 # sources
 set(SOURCES
-"mem.hpp"
+"memory.hpp"
 "program.cpp"
  "macros.h"
 "offsets.hpp"
